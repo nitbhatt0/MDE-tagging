@@ -265,7 +265,7 @@
                 "actions": {
                     "Compose_Tag": {
                         "type": "Compose",
-                        "inputs": "Shell-Tag"
+                        "inputs": "Test-Tag"
                     },
                     "HTTP-Add_Tag": {
                         "runAfter": {
@@ -318,4 +318,5 @@
             "value": {}
         }
     }
+
 }
