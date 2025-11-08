@@ -1,3 +1,8 @@
+Requirement-
+I want to assign a custom tag to any new Azure VM that is created in my Environment.
+
+
+STEPS--
 1) LogicApp- Enable Managed Identity
 
 <img width="161" height="266" alt="image" src="https://github.com/user-attachments/assets/1a02cb36-765f-45a7-b538-019d14622683" />
