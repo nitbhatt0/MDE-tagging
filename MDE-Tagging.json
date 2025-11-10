@@ -335,18 +335,9 @@
                     "where": "@equals(toLower(coalesce(item()?['onboardingStatus'], '')), 'Onboarded')"
                 }
             },
-            "Compose": {
-                "runAfter": {
-                    "Filter-OnBoardingStatus": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Compose",
-                "inputs": "@body('Filter-OnBoardingStatus')"
-            },
             "Filter-SensorHealthState": {
                 "runAfter": {
-                    "Compose": [
+                    "Filter-OnBoardingStatus": [
                         "Succeeded"
                     ]
                 },
