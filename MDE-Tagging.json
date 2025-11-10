@@ -20,7 +20,7 @@
         "actions": {
             "HTTP-_MDE_API": {
                 "runAfter": {
-                    "Initialize_variables": [
+                    "Initialize_Compose_Tag": [
                         "Succeeded"
                     ]
                 },
@@ -37,19 +37,6 @@
                     "contentTransfer": {
                         "transferMode": "Chunked"
                     }
-                }
-            },
-            "Initialize_variables": {
-                "runAfter": {},
-                "type": "InitializeVariable",
-                "inputs": {
-                    "variables": [
-                        {
-                            "name": "lastWindowStart",
-                            "type": "string",
-                            "value": "@{addMinutes(utcNow(), -999)}"
-                        }
-                    ]
                 }
             },
             "Parse_JSON": {
@@ -248,7 +235,7 @@
                     }
                 }
             },
-            "Filter_array": {
+            "Filter-Time": {
                 "runAfter": {
                     "Parse_JSON": [
                         "Succeeded"
@@ -260,28 +247,19 @@
                     "where": "@greaterOrEquals(ticks(item()?['firstSeen']), ticks(variables('lastWindowStart')))\n"
                 }
             },
-            "For_each": {
-                "foreach": "@body('Filter_array')",
+            "For_each_1": {
+                "foreach": "@outputs('Filter-Time')['body']",
                 "actions": {
-                    "Compose_Tag": {
-                        "type": "Compose",
-                        "inputs": "Test-Tag"
-                    },
                     "HTTP-Add_Tag": {
-                        "runAfter": {
-                            "Compose_Tag": [
-                                "Succeeded"
-                            ]
-                        },
                         "type": "Http",
                         "inputs": {
-                            "uri": "@{concat('https://api.securitycenter.microsoft.com/api/machines/', item()?['id'], '/tags')}\n",
+                            "uri": "@{concat('https://api.securitycenter.microsoft.com/api/machines/',first(body('Filter_OS'))?['id'], '/tags')}\n",
                             "method": "POST",
                             "headers": {
                                 "Content-Type": "application/json"
                             },
                             "body": {
-                                "Value": "@{outputs('Compose_Tag')}",
+                                "Value": "@{variables('Compose_Tag')}",
                                 "Action": "Add"
                             },
                             "authentication": {
@@ -297,11 +275,98 @@
                     }
                 },
                 "runAfter": {
-                    "Filter_array": [
+                    "Filter-SensorHealthState": [
                         "Succeeded"
                     ]
                 },
                 "type": "Foreach"
+            },
+            "Initialize_Compose_Tag": {
+                "runAfter": {},
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "lastWindowStart",
+                            "type": "string",
+                            "value": "@{addMinutes(utcNow(), -4500)}"
+                        },
+                        {
+                            "name": "Compose_Tag",
+                            "type": "string",
+                            "value": "Shell-nitin-test"
+                        }
+                    ]
+                }
+            },
+            "Filter_OS": {
+                "runAfter": {
+                    "Filter_Azure_VM": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Query",
+                "inputs": {
+                    "from": "@body('Filter-Time')",
+                    "where": "@equals(item()?['osPlatform'], 'Windows11')"
+                }
+            },
+            "Filter_Azure_VM": {
+                "runAfter": {
+                    "Filter-MachineTags": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Query",
+                "inputs": {
+                    "from": "@body('Filter-Time')",
+                    "where": "@contains(toLower(coalesce(item()?['vmMetadata']?['resourceId'], '')), 'microsoft.compute')"
+                }
+            },
+            "Filter-OnBoardingStatus": {
+                "runAfter": {
+                    "Filter_OS": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Query",
+                "inputs": {
+                    "from": "@body('Filter_OS')",
+                    "where": "@equals(toLower(coalesce(item()?['onboardingStatus'], '')), 'Onboarded')"
+                }
+            },
+            "Compose": {
+                "runAfter": {
+                    "Filter-OnBoardingStatus": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Compose",
+                "inputs": "@body('Filter-OnBoardingStatus')"
+            },
+            "Filter-SensorHealthState": {
+                "runAfter": {
+                    "Compose": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Query",
+                "inputs": {
+                    "from": "@body('Filter_OS')",
+                    "where": "@equals(toLower(coalesce(item()?['healthStatus'], '')), 'Active')"
+                }
+            },
+            "Filter-MachineTags": {
+                "runAfter": {
+                    "Filter-Time": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Query",
+                "inputs": {
+                    "from": "@body('Parse_JSON')?['value']",
+                    "where": "@or(empty(item()?['machineTags']), equals(length(item()?['machineTags']), 0))"
+                }
             }
         },
         "outputs": {},
@@ -318,5 +383,4 @@
             "value": {}
         }
     }
-
 }
