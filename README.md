@@ -8,7 +8,7 @@ STEPS--
 <img width="161" height="266" alt="image" src="https://github.com/user-attachments/assets/1a02cb36-765f-45a7-b538-019d14622683" />
 
 
-2) Entra- Enterprise Application-Assign these permissions-
+2) Entra-> Enterprise Application-> Permissions->
 Machine.Read.All                     
 Machine.ReadWrite.All
 
